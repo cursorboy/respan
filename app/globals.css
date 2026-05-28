@@ -1,0 +1,280 @@
+@import "tailwindcss";
+
+/* "Vintage" design system — Windows-95 era skeuomorphism: teal desktop, silver
+   window chrome, beveled 3D borders, pixel display font. Sharp corners. */
+@theme {
+  --color-bg: #008080; /* teal desktop */
+  --color-panel: #c0c0c0; /* silver window chrome */
+  --color-panel2: #ffffff; /* sunken white field/content well */
+  --color-line: #808080; /* shadow gray */
+  --color-line2: #808080;
+  --color-ink: #000000; /* black text */
+  --color-muted: #3f3f46;
+  --color-faint: #5b5b66;
+  --color-accent: #008080; /* teal */
+  --color-accent-glow: #000080; /* navy (classic selection) */
+  --color-secondary: #c0c0c0;
+
+  /* bevel palette */
+  --bev-light: #ffffff;
+  --bev-face: #c0c0c0;
+  --bev-dark: #808080;
+  --bev-black: #000000;
+
+  /* status */
+  --color-good: #16a34a;
+  --color-warn: #b45309;
+  --color-bad: #c00000;
+
+  --font-sans: "Pixelated MS Sans Serif", Arial, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+/* Authentic Windows 95/98 UI font (self-hosted). */
+@font-face {
+  font-family: "Pixelated MS Sans Serif";
+  font-style: normal;
+  font-weight: 400;
+  src: url("/fonts/ms_sans_serif.woff2") format("woff2"), url("/fonts/ms_sans_serif.woff") format("woff");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Pixelated MS Sans Serif";
+  font-style: normal;
+  font-weight: 700;
+  src: url("/fonts/ms_sans_serif_bold.woff2") format("woff2"), url("/fonts/ms_sans_serif_bold.woff") format("woff");
+  font-display: swap;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans); /* authentic MS Sans Serif UI font */
+  font-size: 13px;
+  -webkit-font-smoothing: none;
+  text-rendering: geometricPrecision;
+}
+
+.font-mono {
+  font-variant-numeric: tabular-nums;
+}
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Pixel display type. */
+.display {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.15;
+}
+
+/* Classic teal desktop with a tiled retro "desktop pattern" (SVG tile, no gradient). */
+.bench-bg {
+  background-color: #008080;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Crect width='16' height='16' fill='%23008080'/%3E%3Crect x='0' y='0' width='2' height='2' fill='%23006d6d'/%3E%3Crect x='8' y='8' width='2' height='2' fill='%23006d6d'/%3E%3Crect x='8' y='0' width='1' height='1' fill='%2300a3a3'/%3E%3Crect x='0' y='8' width='1' height='1' fill='%2300a3a3'/%3E%3C/svg%3E");
+  background-size: 16px 16px;
+}
+
+/* Keyboard focus: dotted outline, the classic Win95 focus rectangle. */
+:focus-visible {
+  outline: 1px dotted #000;
+  outline-offset: 1px;
+}
+
+/* ---- Skeuomorphic bevels ---- */
+.bevel-out {
+  border: 2px solid;
+  border-color: var(--bev-light) var(--bev-black) var(--bev-black) var(--bev-light);
+  box-shadow: inset 1px 1px 0 0 var(--bev-light), inset -1px -1px 0 0 var(--bev-dark);
+}
+.bevel-in {
+  border: 2px solid;
+  border-color: var(--bev-dark) var(--bev-light) var(--bev-light) var(--bev-dark);
+  box-shadow: inset 1px 1px 0 0 var(--bev-black), inset -1px -1px 0 0 var(--bev-dark);
+}
+
+/* ---- Window ---- */
+.win {
+  background: var(--bev-face);
+  border: 2px solid;
+  border-color: var(--bev-light) var(--bev-black) var(--bev-black) var(--bev-light);
+  box-shadow: inset 1px 1px 0 0 var(--bev-light), inset -1px -1px 0 0 var(--bev-dark);
+  border-radius: 0;
+}
+.win-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 2px;
+  padding: 3px 4px 3px 7px;
+  background: var(--color-accent-glow); /* navy active title bar */
+  color: #fff;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 12px;
+}
+.win-controls {
+  display: flex;
+  gap: 2px;
+}
+.win-title-off {
+  background: #8a8a8a; /* inactive window title bar */
+}
+.win-controls button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 14px;
+  background: var(--bev-face);
+  color: #000;
+  border: 1px solid;
+  border-color: var(--bev-light) var(--bev-black) var(--bev-black) var(--bev-light);
+  box-shadow: inset 1px 1px 0 0 var(--bev-light), inset -1px -1px 0 0 var(--bev-dark);
+  font-size: 9px;
+  line-height: 1;
+  font-family: var(--font-mono);
+}
+.win-controls button:active {
+  border-color: var(--bev-black) var(--bev-light) var(--bev-light) var(--bev-black);
+  box-shadow: inset 1px 1px 0 0 var(--bev-dark);
+}
+.win-body {
+  padding: 14px;
+}
+
+/* ---- Beveled button ---- */
+.btn95 {
+  background: var(--bev-face);
+  color: #000;
+  border: 2px solid;
+  border-color: var(--bev-light) var(--bev-black) var(--bev-black) var(--bev-light);
+  box-shadow: inset 1px 1px 0 0 var(--bev-light), inset -1px -1px 0 0 var(--bev-dark);
+  border-radius: 0;
+  font-family: var(--font-sans);
+}
+.btn95:active:not(:disabled) {
+  border-color: var(--bev-black) var(--bev-light) var(--bev-light) var(--bev-black);
+  box-shadow: inset 1px 1px 0 0 var(--bev-dark);
+  padding-top: 1px;
+}
+
+/* ---- Sunken field ---- */
+.field95 {
+  background: #fff;
+  color: #000;
+  border: 2px solid;
+  border-color: var(--bev-dark) var(--bev-light) var(--bev-light) var(--bev-dark);
+  box-shadow: inset 1px 1px 0 0 var(--bev-black);
+  border-radius: 0;
+}
+
+/* small beveled chip / badge */
+.chip95 {
+  background: var(--bev-face);
+  border: 1px solid;
+  border-color: var(--bev-light) var(--bev-black) var(--bev-black) var(--bev-light);
+  box-shadow: inset 1px 1px 0 0 var(--bev-light), inset -1px -1px 0 0 var(--bev-dark);
+  border-radius: 0;
+}
+
+/* ---- Animations (kept; collapsed under reduced-motion) ---- */
+@keyframes pulse-run {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.animate-pulse-run {
+  animation: pulse-run 1.1s steps(2, end) infinite;
+}
+
+@keyframes cell-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.animate-cell-pop {
+  animation: cell-pop 0.18s steps(3, end);
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-fade-up {
+  animation: fade-up 0.25s steps(4, end);
+}
+
+@keyframes drawer-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+.drawer-enter {
+  animation: drawer-in 0.2s steps(5, end);
+}
+
+.draw-line {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: draw-line 0.7s steps(8, end) forwards;
+}
+@keyframes draw-line {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 0.45s steps(6, end),
+    transform 0.45s steps(6, end);
+}
+.reveal-in {
+  opacity: 1;
+  transform: none;
+}
+
+* {
+  scrollbar-width: auto;
+  scrollbar-color: var(--bev-face) var(--bev-dark);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
