@@ -69,8 +69,24 @@ export async function POST(req: Request): Promise<Response> {
   const invalid = validateRun(body);
   if (invalid) return Response.json({ error: invalid }, { status: 400 });
 
-  const client = makeClient(env);
-  const model = body.model?.trim() || env.model;
+  const resolvedApiKey = body.apiKey?.trim() || env.apiKey;
+  const missing: string[] = [];
+  if (!resolvedApiKey) missing.push("RESPAN_API_KEY");
+  const resolvedModel = body.model?.trim() || env.model;
+  if (!resolvedModel) missing.push("RESPAN_MODEL");
+  if (missing.length > 0) {
+    return Response.json(
+      {
+        error:
+          `Missing required value(s): ${missing.join(", ")}. ` +
+          `Set them in .env.local or enter them in the Connection panel.`,
+      },
+      { status: 400 },
+    );
+  }
+
+  const client = makeClient({ ...env, apiKey: resolvedApiKey });
+  const model = resolvedModel;
   const judgeModel = body.judgeModel?.trim() || model;
   const mode = body.mode;
   const ensemble = Math.max(1, body.ensemble ?? 1);

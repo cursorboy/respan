@@ -14,11 +14,13 @@ interface Props {
   bodyClassName?: string;
   /** If provided, the ✕ control closes (unmounts) the window instead of minimizing. */
   onClose?: () => void;
+  /** Start the window minimized (only applies on first registration). */
+  defaultMin?: boolean;
 }
 
 // A draggable, focusable, minimizable, maximizable Win95 window. Floating on
 // large screens (managed by DesktopProvider); a plain stacked window otherwise.
-export function Window({ id, title, children, defaultX = 40, defaultY = 24, w = 600, bodyClassName = "win-body", onClose }: Props) {
+export function Window({ id, title, children, defaultX = 40, defaultY = 24, w = 600, bodyClassName = "win-body", onClose, defaultMin }: Props) {
   const desktop = useDesktop();
   const { windows, topId, floating, register, unregister, setTitle, focus, move, setMin, toggleMax, snap } = desktop;
   const drag = useRef<{ sx: number; sy: number; ox: number; oy: number; lastClientX: number; lastClientY: number } | null>(null);
@@ -35,7 +37,7 @@ export function Window({ id, title, children, defaultX = 40, defaultY = 24, w = 
   };
 
   useEffect(() => {
-    register(id, defaultX, defaultY, w);
+    register(id, defaultX, defaultY, w, defaultMin);
     return () => unregister(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);

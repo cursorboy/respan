@@ -38,6 +38,10 @@ interface Props {
   /** Optional: ask the gateway to propose new test cases that discriminate variants. */
   onEvolveCases?: () => void;
   evolveCasesBusy?: boolean;
+  apiKey: string;
+  onApiKeyChange: (key: string) => void;
+  model: string;
+  onModelChange: (m: string) => void;
 }
 
 export function ConfigPanel(props: Props) {
@@ -65,6 +69,10 @@ export function ConfigPanel(props: Props) {
     evolveBusy,
     onEvolveCases,
     evolveCasesBusy,
+    apiKey,
+    onApiKeyChange,
+    model,
+    onModelChange,
   } = props;
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -73,6 +81,33 @@ export function ConfigPanel(props: Props) {
 
   return (
     <div className="flex flex-col">
+      {/* Connection */}
+      <Section title="Connection">
+        <label className="block text-[13px]">
+          <span className="text-muted">Model</span>
+          <input
+            value={model}
+            onChange={(e) => onModelChange(e.target.value)}
+            disabled={disabled}
+            spellCheck={false}
+            placeholder="e.g. gpt-4o-mini (from .env if blank)"
+            className="field95 mt-1 w-full p-1.5 font-mono text-[12px] text-ink outline-none disabled:opacity-60"
+          />
+        </label>
+        <label className="mt-3 block text-[13px]">
+          <span className="text-muted">API key</span>
+          <input
+            type="password"
+            value={apiKey}
+            onChange={(e) => onApiKeyChange(e.target.value)}
+            disabled={disabled}
+            spellCheck={false}
+            placeholder="sk-… (from .env if blank)"
+            className="field95 mt-1 w-full p-1.5 font-mono text-[12px] text-ink outline-none disabled:opacity-60"
+          />
+        </label>
+      </Section>
+
       {/* Evaluation */}
       <Section title="How to judge">
         <div className="grid grid-cols-2 gap-1.5">

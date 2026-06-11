@@ -17,7 +17,7 @@ interface DesktopValue {
   titles: Record<string, string>;
   topId: string | null;
   floating: boolean;
-  register: (id: string, x: number, y: number, w: number) => void;
+  register: (id: string, x: number, y: number, w: number, defaultMin?: boolean) => void;
   unregister: (id: string) => void;
   setTitle: (id: string, title: string) => void;
   focus: (id: string) => void;
@@ -62,12 +62,12 @@ export function DesktopProvider({ children }: { children: React.ReactNode }) {
     return () => mq.removeEventListener("change", apply);
   }, []);
 
-  const register = useCallback((id: string, x: number, y: number, w: number) => {
+  const register = useCallback((id: string, x: number, y: number, w: number, defaultMin?: boolean) => {
     setWindows((prev) => {
       if (prev[id]) return prev;
       zRef.current += 1;
       const p = clampPos(x, y, w);
-      return { ...prev, [id]: { x: p.x, y: p.y, w, z: zRef.current, min: false, max: false } };
+      return { ...prev, [id]: { x: p.x, y: p.y, w, z: zRef.current, min: defaultMin ?? false, max: false } };
     });
     setOrder((prev) => (prev.includes(id) ? prev : [...prev, id]));
   }, []);

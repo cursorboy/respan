@@ -30,23 +30,13 @@ export class EnvError extends Error {
 }
 
 export function getEnv(): Env {
-  const apiKey = process.env.RESPAN_API_KEY?.trim();
-  const model = process.env.RESPAN_MODEL?.trim();
-
-  const missing: string[] = [];
-  if (!apiKey) missing.push("RESPAN_API_KEY");
-  if (!model) missing.push("RESPAN_MODEL");
-  if (missing.length > 0) {
-    throw new EnvError(
-      `Missing required environment variable(s): ${missing.join(", ")}. ` +
-        `Copy .env.example to .env.local, fill them in, and restart the dev server.`,
-    );
-  }
+  const apiKey = process.env.RESPAN_API_KEY?.trim() ?? "";
+  const model = process.env.RESPAN_MODEL?.trim() ?? "";
 
   const parsedPrice = Number(process.env.RESPAN_PRICE_PER_1K_TOKENS);
   return {
-    apiKey: apiKey as string,
-    model: model as string,
+    apiKey,
+    model,
     customerId: process.env.RESPAN_CUSTOMER_ID?.trim() || DEFAULT_CUSTOMER_ID,
     baseUrl: process.env.RESPAN_BASE_URL?.trim() || DEFAULT_BASE_URL,
     apiBaseUrl: process.env.RESPAN_API_BASE_URL?.trim() || undefined,

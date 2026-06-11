@@ -10,9 +10,10 @@ import { Window } from "./Window";
 interface Props {
   mode: RunMode;
   refreshKey: number;
+  defaultMin?: boolean;
 }
 
-export function HistoryPanel({ mode, refreshKey }: Props) {
+export function HistoryPanel({ mode, refreshKey, defaultMin }: Props) {
   const [runs, setRuns] = useState<PersistedRun[]>([]);
   const [loaded, setLoaded] = useState(false);
 
@@ -47,7 +48,7 @@ export function HistoryPanel({ mode, refreshKey }: Props) {
   // even on a fresh Vercel deploy where /tmp is empty). Empty + loading states
   // show a friendly placeholder instead of unmounting.
   return (
-    <Window id="history" title="history.log" defaultX={1000} defaultY={470} w={444}>
+    <Window id="history" title="history.log" defaultX={1000} defaultY={470} w={444} defaultMin={defaultMin}>
       <div className="mb-3 flex items-baseline justify-between">
         <span className="font-mono text-[11px] text-faint">
           {loaded ? `${runs.length} run${runs.length === 1 ? "" : "s"}` : "loading…"}

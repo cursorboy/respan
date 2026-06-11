@@ -39,6 +39,8 @@ export interface RunRequest {
   concurrency?: number;
   /** Judge samples per evaluation (absolute) or per ordering (arena). */
   ensemble?: number;
+  /** Optional API key supplied by the user; overrides the server env var. */
+  apiKey?: string;
 }
 
 export type BattleWinner = "a" | "b" | "tie";

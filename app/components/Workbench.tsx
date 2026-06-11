@@ -38,7 +38,7 @@ import { Window } from "./Window";
 import { WinFlag } from "./WinFlag";
 import { Taskbar } from "./Taskbar";
 import { AboutDialog } from "./AboutDialog";
-import { LoginScreen } from "./LoginScreen";
+import { ApiKeySetup } from "./ApiKeySetup";
 import { DesktopIcons } from "./DesktopIcons";
 import { exportCsv, exportJson } from "@/app/lib/export";
 import { Playground } from "./tools/Playground";
@@ -103,6 +103,9 @@ export default function Workbench() {
   const [historyRefresh, setHistoryRefresh] = useState(0);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [judgeModel, setJudgeModel] = useState("");
+  const [apiKey, setApiKey] = useState("");
+  const [model, setModel] = useState("");
+  const [firstVisit, setFirstVisit] = useState(false);
   const [playgroundOpen, setPlaygroundOpen] = useState(false);
   const [minesweeperOpen, setMinesweeperOpen] = useState(false);
   const [diffOpen, setDiffOpen] = useState(false);
@@ -119,14 +122,28 @@ export default function Workbench() {
 
   const abortRef = useRef<AbortController | null>(null);
 
-  const dismissLogin = useCallback(() => {
-    playStartup(); // Win95 startup chime fires on the first user gesture (allowed by autoplay policy)
+  const completeSetup = useCallback((key: string) => {
+    playStartup();
+    try {
+      localStorage.setItem("promptarena.apiKey", key);
+      if (!localStorage.getItem("promptarena.visited")) {
+        localStorage.setItem("promptarena.visited", "1");
+        setFirstVisit(true);
+      }
+    } catch { /* private mode */ }
+    if (key) setApiKey(key);
     setShowLogin(false);
   }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     setBooting(sessionStorage.getItem("promptarena.booted") !== "1");
+    // Pre-populate API key from localStorage so returning users skip re-entry.
+    try {
+      const saved = localStorage.getItem("promptarena.apiKey");
+      if (saved) setApiKey(saved);
+      if (!localStorage.getItem("promptarena.visited")) setFirstVisit(true);
+    } catch { /* private mode */ }
   }, []);
 
   // Error chime when a banner pops up — sensory feedback for failures.
@@ -329,6 +346,8 @@ export default function Workbench() {
       ensemble,
       judgeModel: judgeModel.trim() || undefined,
       concurrency: DEFAULT_CONCURRENCY,
+      model: model.trim() || undefined,
+      apiKey: apiKey.trim() || undefined,
     };
 
     try {
@@ -488,7 +507,7 @@ export default function Workbench() {
   return (
     <DesktopProvider>
     {booting && <BootSplash onDone={finishBoot} />}
-    {!booting && showLogin && <LoginScreen onEnter={dismissLogin} />}
+    {!booting && showLogin && <ApiKeySetup initialKey={apiKey} onContinue={completeSetup} />}
     <div className="min-h-screen bench-bg pb-12">
       <header className="sticky top-0 z-20 border-b-2 border-[#808080] bg-panel">
         <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-4 px-4 py-2">
@@ -546,6 +565,10 @@ export default function Workbench() {
               evolveBusy={evolveBusy}
               onEvolveCases={evolveCases}
               evolveCasesBusy={evolveCasesBusy}
+              apiKey={apiKey}
+              onApiKeyChange={setApiKey}
+              model={model}
+              onModelChange={setModel}
             />
           </div>
           <div className="px-3 pb-3">
@@ -579,7 +602,7 @@ export default function Workbench() {
           </>
         )}
 
-        <HistoryPanel mode={mode} refreshKey={historyRefresh} />
+        <HistoryPanel mode={mode} refreshKey={historyRefresh} defaultMin={firstVisit} />
 
         {playgroundOpen && <Playground onClose={() => setPlaygroundOpen(false)} />}
         {minesweeperOpen && <Minesweeper onClose={() => setMinesweeperOpen(false)} />}
