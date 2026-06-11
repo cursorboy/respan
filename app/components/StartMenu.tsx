@@ -1,6 +1,6 @@
 "use client";
 
-import { FilePlus, FileDown, Info, ExternalLink, Play, Square, FlaskConical, Bomb } from "lucide-react";
+import { FilePlus, FileDown, Info, ExternalLink, Play, Square, FlaskConical, Bomb, GitCompare, FileText, Calculator as CalcIcon } from "lucide-react";
 
 export interface StartMenuActions {
   running: boolean;
@@ -13,6 +13,9 @@ export interface StartMenuActions {
   onAbout: () => void;
   onPlayground: () => void;
   onMinesweeper: () => void;
+  onDiff: () => void;
+  onNotepad: () => void;
+  onCalculator: () => void;
 }
 
 export function StartMenu({ onClose, ...a }: StartMenuActions & { onClose: () => void }) {
@@ -37,6 +40,9 @@ export function StartMenu({ onClose, ...a }: StartMenuActions & { onClose: () =>
         <Item icon={<FilePlus size={15} />} label="New run" onClick={run(a.onNewRun)} />
         <Divider />
         <Item icon={<FlaskConical size={15} />} label="Playground" onClick={run(a.onPlayground)} />
+        <Item icon={<GitCompare size={15} />} label="Variant diff" onClick={run(a.onDiff)} />
+        <Item icon={<FileText size={15} />} label="Notepad" onClick={run(a.onNotepad)} />
+        <Item icon={<CalcIcon size={15} />} label="Calculator" onClick={run(a.onCalculator)} />
         <Item icon={<Bomb size={15} />} label="Minesweeper" onClick={run(a.onMinesweeper)} />
         <Divider />
         <Item icon={<FileDown size={15} />} label="Export results (CSV)" onClick={run(a.onExportCsv)} disabled={!a.hasResults} />

@@ -43,6 +43,11 @@ import { DesktopIcons } from "./DesktopIcons";
 import { exportCsv, exportJson } from "@/app/lib/export";
 import { Playground } from "./tools/Playground";
 import { Minesweeper } from "./tools/Minesweeper";
+import { VariantDiff } from "./VariantDiff";
+import { Notepad } from "./tools/Notepad";
+import { Calculator } from "./tools/Calculator";
+import { BootSplash } from "./BootSplash";
+import { playStartup, playError } from "@/app/lib/sounds";
 
 const MAX_SERIES = 240;
 
@@ -100,15 +105,43 @@ export default function Workbench() {
   const [judgeModel, setJudgeModel] = useState("");
   const [playgroundOpen, setPlaygroundOpen] = useState(false);
   const [minesweeperOpen, setMinesweeperOpen] = useState(false);
+  const [diffOpen, setDiffOpen] = useState(false);
+  const [notepadOpen, setNotepadOpen] = useState(false);
+  const [calcOpen, setCalcOpen] = useState(false);
+  // Boot splash gated by sessionStorage so it plays once per tab session, not every refresh.
+  const [booting, setBooting] = useState<boolean | null>(null);
   // Win95 login gate — shown on every full page load (no persistence), so any
   // refresh re-triggers the "boot" experience.
   const [showLogin, setShowLogin] = useState(true);
   const [evolveBusy, setEvolveBusy] = useState(false);
+  const [evolveCasesBusy, setEvolveCasesBusy] = useState(false);
   const [actualCost, setActualCost] = useState<{ usd: number; tokens: number; count: number } | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
 
-  const dismissLogin = useCallback(() => setShowLogin(false), []);
+  const dismissLogin = useCallback(() => {
+    playStartup(); // Win95 startup chime fires on the first user gesture (allowed by autoplay policy)
+    setShowLogin(false);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setBooting(sessionStorage.getItem("promptarena.booted") !== "1");
+  }, []);
+
+  // Error chime when a banner pops up — sensory feedback for failures.
+  useEffect(() => {
+    if (banner) playError();
+  }, [banner]);
+
+  const finishBoot = useCallback(() => {
+    try {
+      sessionStorage.setItem("promptarena.booted", "1");
+    } catch {
+      /* private mode */
+    }
+    setBooting(false);
+  }, []);
 
   useEffect(() => {
     const saved = loadState();
@@ -390,6 +423,46 @@ export default function Workbench() {
     }
   }, [evolveBusy, running, variants, cases, judgeCriteria, experimentId]);
 
+  // Ask the gateway to propose new discriminating test cases.
+  const evolveCases = useCallback(async () => {
+    if (evolveCasesBusy || running || cases.length >= MAX_CASES) return;
+    setEvolveCasesBusy(true);
+    setBanner(null);
+    try {
+      const res = await fetch("/api/evolve-cases", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          experimentId: experimentId || undefined,
+          variants,
+          cases,
+          judgeCriteria: judgeCriteria.trim(),
+          count: Math.min(3, MAX_CASES - cases.length),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setBanner(typeof data?.error === "string" ? data.error : `Generate failed (${res.status}).`);
+        return;
+      }
+      const proposals: string[] = data.cases ?? [];
+      if (proposals.length === 0) {
+        setBanner("Generate returned no usable cases.");
+        return;
+      }
+      setCasesText((prev) => {
+        const trimmed = prev.replace(/\s+$/, "");
+        const sep = trimmed.length === 0 ? "" : "\n";
+        const room = MAX_CASES - cases.length;
+        return trimmed + sep + proposals.slice(0, room).join("\n");
+      });
+    } catch (err) {
+      setBanner((err as Error)?.message ?? "Generate failed.");
+    } finally {
+      setEvolveCasesBusy(false);
+    }
+  }, [evolveCasesBusy, running, variants, cases, judgeCriteria, experimentId]);
+
   const clearRun = useCallback(() => {
     setCells({});
     setResult(null);
@@ -414,7 +487,8 @@ export default function Workbench() {
 
   return (
     <DesktopProvider>
-    {showLogin && <LoginScreen onEnter={dismissLogin} />}
+    {booting && <BootSplash onDone={finishBoot} />}
+    {!booting && showLogin && <LoginScreen onEnter={dismissLogin} />}
     <div className="min-h-screen bench-bg pb-12">
       <header className="sticky top-0 z-20 border-b-2 border-[#808080] bg-panel">
         <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-4 px-4 py-2">
@@ -470,6 +544,8 @@ export default function Workbench() {
               onImportCsv={importCsv}
               onEvolve={evolve}
               evolveBusy={evolveBusy}
+              onEvolveCases={evolveCases}
+              evolveCasesBusy={evolveCasesBusy}
             />
           </div>
           <div className="px-3 pb-3">
@@ -498,7 +574,7 @@ export default function Workbench() {
             {(running || metricsLatest) && (
               <MetricsBar latest={metricsLatest} series={metricsSeries} running={running} />
             )}
-            <Leaderboard mode={mode} variants={variants} result={result} model={runInfo?.model} />
+            <Leaderboard mode={mode} variants={variants} result={result} model={runInfo?.model} cells={cells} cases={cases} />
             <Matrix mode={mode} variants={variants} cases={cases} cells={cells} selected={selected} onSelect={setSelected} />
           </>
         )}
@@ -507,6 +583,9 @@ export default function Workbench() {
 
         {playgroundOpen && <Playground onClose={() => setPlaygroundOpen(false)} />}
         {minesweeperOpen && <Minesweeper onClose={() => setMinesweeperOpen(false)} />}
+        {diffOpen && <VariantDiff variants={variants} onClose={() => setDiffOpen(false)} />}
+        {notepadOpen && <Notepad onClose={() => setNotepadOpen(false)} />}
+        {calcOpen && <Calculator onClose={() => setCalcOpen(false)} />}
       </main>
 
       <DetailDrawer
@@ -540,6 +619,9 @@ export default function Workbench() {
         onAbout={() => setAboutOpen(true)}
         onPlayground={() => setPlaygroundOpen(true)}
         onMinesweeper={() => setMinesweeperOpen(true)}
+        onDiff={() => setDiffOpen(true)}
+        onNotepad={() => setNotepadOpen(true)}
+        onCalculator={() => setCalcOpen(true)}
       />
     </div>
     </DesktopProvider>

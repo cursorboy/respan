@@ -35,6 +35,9 @@ interface Props {
   /** Optional self-improving loop: ask the gateway to propose better variants. */
   onEvolve?: () => void;
   evolveBusy?: boolean;
+  /** Optional: ask the gateway to propose new test cases that discriminate variants. */
+  onEvolveCases?: () => void;
+  evolveCasesBusy?: boolean;
 }
 
 export function ConfigPanel(props: Props) {
@@ -60,6 +63,8 @@ export function ConfigPanel(props: Props) {
     onImportCsv,
     onEvolve,
     evolveBusy,
+    onEvolveCases,
+    evolveCasesBusy,
   } = props;
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -148,13 +153,26 @@ export function ConfigPanel(props: Props) {
         title="Test set"
         hint={`${caseCount} / ${MAX_CASES}`}
         action={
-          <button
-            onClick={() => fileRef.current?.click()}
-            disabled={disabled}
-            className="flex items-center gap-1 text-[11px] text-muted transition-colors hover:text-accent disabled:opacity-40"
-          >
-            <FileUp size={12} strokeWidth={2} /> import CSV
-          </button>
+          <div className="flex items-center gap-3">
+            {onEvolveCases && (
+              <button
+                onClick={onEvolveCases}
+                disabled={disabled || evolveCasesBusy || caseCount >= MAX_CASES}
+                title="Ask the gateway to propose cases that distinguish variants"
+                className="flex items-center gap-1 text-[11px] font-bold text-accent-glow transition-colors hover:text-accent disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <Sparkles size={12} strokeWidth={2} className={evolveCasesBusy ? "animate-pulse-run" : ""} />
+                {evolveCasesBusy ? "generating…" : "generate"}
+              </button>
+            )}
+            <button
+              onClick={() => fileRef.current?.click()}
+              disabled={disabled}
+              className="flex items-center gap-1 text-[11px] text-muted transition-colors hover:text-accent disabled:opacity-40"
+            >
+              <FileUp size={12} strokeWidth={2} /> import CSV
+            </button>
+          </div>
         }
       >
         <input

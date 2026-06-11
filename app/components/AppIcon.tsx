@@ -1,5 +1,5 @@
 // A unique icon per app/window, by id.
-import { Settings, Crown, Activity, Trophy, Grid3x3, History, FlaskConical, Bomb, AppWindow } from "lucide-react";
+import { Settings, Crown, Activity, Trophy, Grid3x3, History, FlaskConical, Bomb, AppWindow, GitCompare, FileText, Calculator as CalcIcon } from "lucide-react";
 
 const ICON: Record<string, typeof Settings> = {
   setup: Settings,
@@ -10,6 +10,9 @@ const ICON: Record<string, typeof Settings> = {
   history: History,
   playground: FlaskConical,
   minesweeper: Bomb,
+  diff: GitCompare,
+  notepad: FileText,
+  calculator: CalcIcon,
 };
 
 const COLOR: Record<string, string> = {
@@ -21,6 +24,9 @@ const COLOR: Record<string, string> = {
   history: "#b06a00",
   playground: "#2e9e57",
   minesweeper: "#c00000",
+  diff: "#7c3aed",
+  notepad: "#3b66b5",
+  calculator: "#4b5563",
 };
 
 export function AppIcon({

@@ -24,6 +24,8 @@ interface DesktopValue {
   move: (id: string, x: number, y: number) => void;
   setMin: (id: string, v: boolean) => void;
   toggleMax: (id: string) => void;
+  /** Snap a window to a screen edge (left half / right half / maximize). */
+  snap: (id: string, side: "left" | "right" | "max") => void;
 }
 
 const Ctx = createContext<DesktopValue | null>(null);
@@ -126,6 +128,17 @@ export function DesktopProvider({ children }: { children: React.ReactNode }) {
     [],
   );
 
+  const snap = useCallback((id: string, side: "left" | "right" | "max") => {
+    setWindows((prev) => {
+      if (!prev[id] || typeof window === "undefined") return prev;
+      const contentW = Math.min(1500, window.innerWidth) - 16;
+      if (side === "max") return { ...prev, [id]: { ...prev[id], max: true } };
+      const halfW = Math.max(280, Math.floor((contentW - 16) / 2));
+      const x = side === "left" ? 8 : contentW - halfW - 8;
+      return { ...prev, [id]: { ...prev[id], x, y: 8, w: halfW, max: false } };
+    });
+  }, []);
+
   const topId = useMemo(() => {
     let top: string | null = null;
     let z = -1;
@@ -140,8 +153,8 @@ export function DesktopProvider({ children }: { children: React.ReactNode }) {
   }, [windows, order]);
 
   const value = useMemo(
-    () => ({ windows, order, titles, topId, floating, register, unregister, setTitle, focus, move, setMin, toggleMax }),
-    [windows, order, titles, topId, floating, register, unregister, setTitle, focus, move, setMin, toggleMax],
+    () => ({ windows, order, titles, topId, floating, register, unregister, setTitle, focus, move, setMin, toggleMax, snap }),
+    [windows, order, titles, topId, floating, register, unregister, setTitle, focus, move, setMin, toggleMax, snap],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

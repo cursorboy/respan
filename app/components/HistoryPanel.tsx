@@ -43,14 +43,26 @@ export function HistoryPanel({ mode, refreshKey }: Props) {
     return [...byName.entries()].filter(([, vals]) => vals.length >= 2).slice(0, 6);
   }, [runs, mode]);
 
-  if (!loaded || runs.length === 0) return null; // editorial: no empty placeholder
-
+  // Always render the window (so it's reachable from the taskbar / Start menu
+  // even on a fresh Vercel deploy where /tmp is empty). Empty + loading states
+  // show a friendly placeholder instead of unmounting.
   return (
     <Window id="history" title="history.log" defaultX={1000} defaultY={470} w={444}>
       <div className="mb-3 flex items-baseline justify-between">
-        <span className="font-mono text-[11px] text-faint">{runs.length} runs</span>
+        <span className="font-mono text-[11px] text-faint">
+          {loaded ? `${runs.length} run${runs.length === 1 ? "" : "s"}` : "loading…"}
+        </span>
         <span className="font-mono text-[11px] text-faint">{mode === "arena" ? "rating" : "mean score"} over time</span>
       </div>
+
+      {loaded && runs.length === 0 && (
+        <div className="bevel-in flex flex-col items-center gap-1 bg-panel2/60 px-4 py-6 text-center">
+          <p className="text-[12px] font-bold text-ink">No runs yet.</p>
+          <p className="text-[11px] text-faint">
+            Kick off an experiment from <span className="font-mono">setup.cfg</span> — every run lands here.
+          </p>
+        </div>
+      )}
 
       {series.length > 0 && (
         <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3">

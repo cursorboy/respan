@@ -20,8 +20,19 @@ interface Props {
 // large screens (managed by DesktopProvider); a plain stacked window otherwise.
 export function Window({ id, title, children, defaultX = 40, defaultY = 24, w = 600, bodyClassName = "win-body", onClose }: Props) {
   const desktop = useDesktop();
-  const { windows, topId, floating, register, unregister, setTitle, focus, move, setMin, toggleMax } = desktop;
-  const drag = useRef<{ sx: number; sy: number; ox: number; oy: number } | null>(null);
+  const { windows, topId, floating, register, unregister, setTitle, focus, move, setMin, toggleMax, snap } = desktop;
+  const drag = useRef<{ sx: number; sy: number; ox: number; oy: number; lastClientX: number; lastClientY: number } | null>(null);
+
+  // Edge in pixels — pointer this close to the viewport edge triggers a snap on release.
+  const SNAP_EDGE = 10;
+
+  const detectSnap = (clientX: number, clientY: number): "left" | "right" | "max" | null => {
+    if (typeof window === "undefined") return null;
+    if (clientY <= SNAP_EDGE) return "max";
+    if (clientX <= SNAP_EDGE) return "left";
+    if (clientX >= window.innerWidth - SNAP_EDGE) return "right";
+    return null;
+  };
 
   useEffect(() => {
     register(id, defaultX, defaultY, w);
@@ -68,15 +79,22 @@ export function Window({ id, title, children, defaultX = 40, defaultY = 24, w = 
   const onTitleDown = (e: React.PointerEvent) => {
     focus(id);
     if (st.max) return;
-    drag.current = { sx: e.clientX, sy: e.clientY, ox: st.x, oy: st.y };
+    drag.current = { sx: e.clientX, sy: e.clientY, ox: st.x, oy: st.y, lastClientX: e.clientX, lastClientY: e.clientY };
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   };
   const onTitleMove = (e: React.PointerEvent) => {
     if (!drag.current) return;
+    drag.current.lastClientX = e.clientX;
+    drag.current.lastClientY = e.clientY;
     move(id, drag.current.ox + (e.clientX - drag.current.sx), drag.current.oy + (e.clientY - drag.current.sy));
   };
   const onTitleUp = () => {
+    const d = drag.current;
     drag.current = null;
+    if (!d) return;
+    // Classic Aero-style snap: release near a viewport edge to dock.
+    const where = detectSnap(d.lastClientX, d.lastClientY);
+    if (where) snap(id, where);
   };
 
   const style: React.CSSProperties = st.max

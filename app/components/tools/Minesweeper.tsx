@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Window } from "../Window";
+import { playWin, playError } from "@/app/lib/sounds";
 
 const COLS = 9;
 const ROWS = 9;
@@ -95,6 +96,7 @@ export function Minesweeper({ onClose }: { onClose: () => void }) {
       dead[i] = { ...dead[i], rev: true };
       setBoard(dead);
       setStatus("lost");
+      playError();
       return;
     }
     const next = floodReveal(b, i);
@@ -103,6 +105,7 @@ export function Minesweeper({ onClose }: { onClose: () => void }) {
     if (revealedSafe === N - MINES) {
       setStatus("won");
       setBoard(next.map((c) => (c.mine ? { ...c, flag: true } : c)));
+      playWin();
     }
   };
 

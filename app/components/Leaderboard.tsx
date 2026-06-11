@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
-import { Crown } from "lucide-react";
-import type { AbsoluteResult, ArenaResult, RunMode, VariantSpec } from "@/app/lib/types";
+import { Crown, TrendingUp, TrendingDown } from "lucide-react";
+import type { AbsoluteResult, ArenaResult, CellKey, MatrixCell, RunMode, VariantSpec } from "@/app/lib/types";
+import { rankCaseHardness } from "@/app/lib/insights";
 import { WinMatrix } from "./WinMatrix";
 import { PromoteButton } from "./PromoteButton";
 import { CountUp } from "./CountUp";
@@ -13,6 +14,8 @@ interface Props {
   variants: VariantSpec[];
   result: ArenaResult | AbsoluteResult | null;
   model?: string;
+  cells?: Record<CellKey, MatrixCell>;
+  cases?: string[];
 }
 
 interface Row {
@@ -26,7 +29,7 @@ interface Row {
   winRate?: number;
 }
 
-export function Leaderboard({ mode, variants, result, model }: Props) {
+export function Leaderboard({ mode, variants, result, model, cells, cases }: Props) {
   const rows = useMemo<Row[]>(() => {
     if (!result) return [];
     const lookup = (id: string) => variants.find((v) => v.id === id);
@@ -129,6 +132,10 @@ export function Leaderboard({ mode, variants, result, model }: Props) {
         </div>
       )}
 
+      {cells && cases && cases.length > 1 && (
+        <CaseInsights mode={mode} cells={cells} variants={variants} cases={cases} />
+      )}
+
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
         <span className="text-[13px] text-muted">Ship the leader: deploy it as a managed Respan prompt.</span>
         <PromoteButton
@@ -138,5 +145,58 @@ export function Leaderboard({ mode, variants, result, model }: Props) {
         />
       </div>
     </Window>
+  );
+}
+
+// Surfaces which test cases actually distinguished the variants vs. which were
+// uninformative (everyone scored the same). Helps users prune their test set.
+function CaseInsights({
+  mode,
+  cells,
+  variants,
+  cases,
+}: {
+  mode: RunMode;
+  cells: Record<CellKey, MatrixCell>;
+  variants: VariantSpec[];
+  cases: string[];
+}) {
+  const ranked = useMemo(
+    () => rankCaseHardness(mode, variants, cases.length, cells).filter((r) => r.complete),
+    [mode, variants, cases.length, cells],
+  );
+  if (ranked.length < 2) return null;
+  const hardest = ranked[0];
+  const easiest = ranked[ranked.length - 1];
+  const unit = mode === "arena" ? "win-rate gap" : "σ";
+  const fmt = (n: number) => (mode === "arena" ? `${Math.round(n * 100)}%` : n.toFixed(2));
+  const preview = (s: string) => (s.length > 56 ? s.slice(0, 56) + "…" : s);
+  return (
+    <div className="mt-6 grid gap-2 border-t border-line pt-4 sm:grid-cols-2">
+      <div className="flex items-start gap-2 rounded border border-line2 bg-panel2/40 p-2.5">
+        <TrendingUp size={14} strokeWidth={2} className="mt-0.5 shrink-0 text-accent-glow" />
+        <div className="min-w-0">
+          <div className="flex items-baseline gap-1.5 text-[11px] font-bold text-ink">
+            Most discriminating
+            <span className="font-mono text-[10px] font-normal text-faint">
+              case {hardest.caseIndex + 1} · {unit} {fmt(hardest.spread)}
+            </span>
+          </div>
+          <p className="mt-0.5 truncate font-mono text-[11px] text-muted">{preview(cases[hardest.caseIndex])}</p>
+        </div>
+      </div>
+      <div className="flex items-start gap-2 rounded border border-line2 bg-panel2/40 p-2.5">
+        <TrendingDown size={14} strokeWidth={2} className="mt-0.5 shrink-0 text-faint" />
+        <div className="min-w-0">
+          <div className="flex items-baseline gap-1.5 text-[11px] font-bold text-ink">
+            Least informative
+            <span className="font-mono text-[10px] font-normal text-faint">
+              case {easiest.caseIndex + 1} · {unit} {fmt(easiest.spread)}
+            </span>
+          </div>
+          <p className="mt-0.5 truncate font-mono text-[11px] text-muted">{preview(cases[easiest.caseIndex])}</p>
+        </div>
+      </div>
+    </div>
   );
 }

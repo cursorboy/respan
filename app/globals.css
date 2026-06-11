@@ -228,6 +228,18 @@ body {
   animation: fade-up 0.25s steps(4, end);
 }
 
+@keyframes boot-progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(550%);
+  }
+}
+.boot-progress {
+  animation: boot-progress 1.4s linear infinite;
+}
+
 @keyframes drawer-in {
   from {
     transform: translateX(100%);
